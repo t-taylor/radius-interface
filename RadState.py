@@ -18,7 +18,6 @@ class RadState:
         packet = Radius(code='Access-Request', id=['id'])
 
 
-# from py-radius
 def radcrypt(secret, authenticator, password):
     """Encrypt a password with the secret and authenticator."""
     # First, pad the password to multiple of 16 octets.
