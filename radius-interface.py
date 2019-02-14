@@ -19,7 +19,7 @@ def main():
     # Weird scapy stuff
     # https://stackoverflow.com/questions/4245810/icmp-ping-packet-is-not-generating-a-reply-when-using-scapy
     #if args.r == '127.0.0.1' or args.r == 'localhost':
-    sc.conf.L3Socket = sc.L3RawSocket
+    #sc.conf.L3Socket = sc.L3RawSocket
 
     ri = RadInterface(args)
 

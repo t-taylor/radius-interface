@@ -21,7 +21,7 @@ class RadInterface:
             usertype = args[0].lower()
             pac = self.state.access_request(id_=usertype)
             print(pac.show())
-            back = sendp(pac, count=1, iface='lo')
+            back = sr1(pac)
             back[0]
 
 

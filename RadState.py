@@ -18,8 +18,7 @@ class RadState:
         self.username = username
         self.anon_username = anon_username
         self.id = random.randint(0, 100) # Packet counter
-        self.header_packet = (Ether(dst = '00:00:00:00:00:00')
-                              / IP(dst=hostname, id=29)
+        self.header_packet = (IP(dst=hostname, id=29)
                               / UDP(sport=sport, dport=dport))
         self.authenticator = os.urandom(16)
         self.default_attributes = [
