@@ -23,8 +23,8 @@ class RadState:
         self.authenticator = os.urandom(16)
         self.default_attributes = [
             # Shows in the packet trace going to 127.0.1.1
-            RadiusAttribute(type='NAS-IP-Address', value='127.0.1.1'), # machine static ip
-            RadiusAttribute(type='NAS-Port', value='\x00\x00\x00\x00'),
+            #RadiusAttribute(type='NAS-IP-Address', value='127.0.1.1'), # machine static ip
+            #RadiusAttribute(type='NAS-Port', value='\x00\x00\x00\x00'),
             #RadiusAttribute(
                 #type='Message-Authenticator',
                 #value=self.authenticator)

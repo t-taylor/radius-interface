@@ -14,6 +14,7 @@ def main():
     parser.add_argument('-r', help='radius server ip', default='127.0.0.1')
     parser.add_argument('-p', help='port number', default=1812)
     parser.add_argument('-f', help='File name for optional query file')
+    parser.add_argument('-i', help='Interface name', required=True)
     args = parser.parse_args(argv[1:])
 
     # Weird scapy stuff
@@ -28,7 +29,7 @@ def main():
         for line in f:
             print(('%s: ' % ln) + line)
             result = ri.query(line)
-            print(result)
+            print(('%s: ' % ln) + result)
 
 
 
