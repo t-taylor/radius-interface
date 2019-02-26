@@ -9,29 +9,41 @@ class RadInterface:
     Interface for interacting with Radius server
     '''
 
-    def __init__(self, args):
+    def __init__(self, args, verbose):
         sport = random.randint(40000, 65000)
-        self.state = RadState(args.r, args.s, args.p, sport, args.u, args.au)
+        self.state = RadState(args.r, args.s, args.P, sport, args.u, args.au, args.p)
         self.interface = args.i
+        self.verbose = verbose
 
     def query(self, qstring):
 
-        # ACCESS_REQUEST(<username/anon/random>|OTHERSTUFF)
+        # ACCESS_REQUEST(<username/anon/random>|<password/none>|<id number>)
         ar = 'RADIUS_ACCESS_REQUEST'
         if ar in qstring:
             args = qstring[len(ar) + 1:-2].split('|')
+            # user required
             usertype = args[0].lower()
-            pac = self.state.access_request(id_=usertype)
-            print('--------- sending packet')
-            print(pac.show())
+            # password optional
+            try:
+                passtype = args[1].lower()
+            except:
+                passtype = 'none'
+            pac = self.state.access_request(id_=usertype, pass_=passtype)
+
+            if self.verbose:
+                print('--------- sending packet u: %s p: %s' % (usertype, passtype))
+                print(pac.show())
+
             back = sr1(pac, iface=self.interface)
             return self.response_parse(back[0])
 
     def response_parse(self, packet):
 
-        print('--------- recived packet')
-        packet.show()
-        print('---------')
+
+        if self.verbose:
+            print('--------- recived packet')
+            packet.show()
+            print('---------')
 
         try:
             picmp = packet[ICMP]

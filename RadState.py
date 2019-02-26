@@ -10,13 +10,14 @@ class RadState:
     Object to hold the state of the radius server
     '''
 
-    def __init__(self, hostname, secret, dport, sport, username, anon_username):
+    def __init__(self, hostname, secret, dport, sport, username, anon_username, password):
         self.hostname = hostname
         self.secret = secret
         self.sport = sport
         self.dport = dport
         self.username = username
         self.anon_username = anon_username
+        self.password = password
         self.id = random.randint(0, 100) # Packet counter
         self.header_packet = (IP(dst=hostname, id=29)
                               / UDP(sport=sport, dport=dport))
@@ -32,34 +33,40 @@ class RadState:
 
     def access_request(self, **kwargs):
         atts = []
-        user = kwargs['id_']
+        if 'id_' in kwargs:
+            user = kwargs['id_']
+        else:
+            user = 'username'
 
         if 'anon' in user:
             atrib = RadiusAttribute(type='User-Name', value=self.anon_username)
-            atrib.len = len(atrib)
             atts.append(atrib)
         elif 'username' in user:
             atrib = RadiusAttribute(type='User-Name', value=self.username)
-            atrib.len = len(atrib)
             atts.append(atrib)
         elif 'random' in user:
             letters = string.ascii_lowercase
             randuser = ''.join(random.choice(letters) for i in range(10))
-            atts.append(RadiusAttribute(type='User-Name', value=randuser, len=len(randuser)))
+            atts.append(RadiusAttribute(type='User-Name', value=randuser))
 
+        if 'pass_' in kwargs:
+            passtype = kwargs['pass_']
+        else:
+            passtype = 'none'
+
+        if 'none' in passtype:
+            'no extra field'
+        if 'password' in passtype:
+            atrib = RadiusAttribute(type='User-Password',
+                                    value=radcrypt(self.secret, self.authenticator, self.password))
+            atts.append(atrib)
         atts.extend(self.default_attributes)
 
         packet = Radius(code='Access-Request',
                         authenticator=self.authenticator,
                         id=self.id, attributes=atts)
         self.id = 1 + self.id
-        return lenfix(self.header_packet / packet)
-
-def lenfix(packet):
-    packet[IP].len = len(packet[IP])
-    packet[UDP].len = len(packet[UDP])
-    packet[Radius].len = len(packet[Radius])
-    return packet
+        return self.header_packet / packet
 
 
 def radcrypt(secret, authenticator, password):
