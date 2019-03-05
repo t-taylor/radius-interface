@@ -21,12 +21,11 @@ def main():
 
     ri = RadInterface(args, args.v)
 
-    ln = 0
     with open(args.f) as f:
         for line in f:
-            print(('%s: ' % ln) + line)
+            print(('%s: ' % ri.state.id) + line.rstrip())
             result = ri.query(line)
-            print(('%s: ' % ln) + result)
+            print(('%s: ' % (ri.state.id - 1)) + result)
 
 
 

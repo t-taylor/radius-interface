@@ -1,7 +1,9 @@
 from __future__ import print_function
 from RadState import RadState
-from scapy.all import sr1, Radius, ICMP
+from scapy.all import sr1, Radius, ICMP, EAP
 from scapy.layers.radius import _packet_codes as radius_codes, _radius_attribute_types as attribute_codes
+from scapy.layers.eap import eap_types
+
 import random
 
 class RadInterface:
@@ -17,28 +19,30 @@ class RadInterface:
 
     def query(self, qstring):
 
-        # ACCESS_REQUEST(<username/anon/random>|<password/none>|<id number>)
+        # ACCESS_REQUEST(USER=<username/anon/random>|PASS=<password/none>|ID=<id number>|EAP=<requeset/none>)
         ar = 'RADIUS_ACCESS_REQUEST'
         if ar in qstring:
             args = qstring[len(ar) + 1:-2].split('|')
-            # user required
-            usertype = args[0].lower()
-            # password optional
-            try:
-                passtype = args[1].lower()
-            except:
-                passtype = 'none'
-            pac = self.state.access_request(id_=usertype, pass_=passtype)
+
+            options = dict()
+            for arg in args:
+                if len(arg) != 0:
+                    vk = arg.split('=')
+                    options[vk[0]] = vk[1]
+
+            pac = self.state.access_request(options)
 
             if self.verbose:
-                print('--------- sending packet u: %s p: %s' % (usertype, passtype))
+                for k,v in options.items():
+                    print('k: %s, v: %s' % (k, v))
+                print('--------- sending packet')
                 print(pac.show())
 
-            back = sr1(pac, iface=self.interface)
+            back = sr1(pac, iface=self.interface, verbose=self.verbose)
             return self.response_parse(back[0])
 
-    def response_parse(self, packet):
 
+    def response_parse(self, packet):
 
         if self.verbose:
             print('--------- recived packet')
@@ -65,12 +69,32 @@ class RadInterface:
             def at_map(attr):
                 s = ''
                 s += attribute_codes[attr.type].upper().replace('-', '_')
-                s += '='
-                s += '\'' + attr.value + '\''
+                if 'MESSAGE_AUTHENTICATOR' in s:
+                    s += '' # Dont show string
+                elif 'STATE' in s:
+                    s += '' # Dont show string
+                    self.state.state = attr.value
+                elif 'EAP_MESSAGE' in s:
+                    peap = attr.value
+                    s += '='
+                    if peap.code == 4:
+                        s += 'EAP_FAILURE'
+                    elif peap.code == 3:
+                        s += 'EAP_SUCCESS'
+                    elif 'MD5-Challenge' in eap_types[peap.type]:
+                        self.state.schallenge = peap.value
+                        s += 'MD5_CHALLENGE'
+                    else:
+                        s += peap.summary()
+                else:
+                    s += '='
+                    s += '\'' + str(attr.value) + '\''
                 return s
 
             pstring += '|'.join(map(at_map, prad.attributes))
             pstring += ')'
+
+            self.state.sauth = prad.authenticator
 
             return pstring
 
