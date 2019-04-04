@@ -71,6 +71,10 @@ class RadState:
                                                    self.authenticator,
                                                    self.password))
             atts.append(atrib)
+        elif 'incorrect' in passtype:
+            atrib = RadiusAttribute(type='User-Password',
+                                    value=os.urandom(16))
+            atts.append(atrib)
 
         # EAP AVP
         eap = get('EAP').lower()
